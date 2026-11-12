@@ -1,6 +1,3 @@
-import { isCI } from './ci.ts';
-
-const TELEMETRY_URL = 'https://www.skills.sh/tele/t';
 const AUDIT_URL = 'https://www.skills.sh/tele/audit';
 
 interface InstallTelemetryData {
@@ -61,23 +58,14 @@ type TelemetryData =
   | FindTelemetryData
   | SyncTelemetryData;
 
-let cliVersion: string | null = null;
-let detectedAgentName: string | null = null;
+/** Compatibility hooks: usage telemetry is disabled in this fork. */
+export function setDetectedAgent(_agentName: string | null): void {}
 
-/**
- * Set the detected AI agent name for telemetry tracking.
- * Called once during agent detection, then included in all telemetry events.
- */
-export function setDetectedAgent(agentName: string | null): void {
-  detectedAgentName = agentName;
-}
+export function setVersion(_version: string): void {}
 
-function isEnabled(): boolean {
+/** Audit requests retain the existing environment opt-outs independently of usage tracking. */
+function isAuditEnabled(): boolean {
   return !process.env.DISABLE_TELEMETRY && !process.env.DO_NOT_TRACK;
-}
-
-export function setVersion(version: string): void {
-  cliVersion = version;
 }
 
 // ─── Security audit data ───
@@ -101,7 +89,7 @@ export async function fetchAuditData(
   skillSlugs: string[],
   timeoutMs = 3000
 ): Promise<AuditResponse | null> {
-  if (!isEnabled()) return null;
+  if (!isAuditEnabled()) return null;
   if (skillSlugs.length === 0) return null;
 
   try {
@@ -125,67 +113,8 @@ export async function fetchAuditData(
   }
 }
 
-// Pending telemetry requests — awaited before CLI exit so we don't lose data,
-// but never block the main workflow.
-const pendingTelemetry: { promise: Promise<void>; controller: AbortController }[] = [];
+/** Kept for existing callers; this fork never sends usage events. */
+export function track(_data: TelemetryData): void {}
 
-export function track(data: TelemetryData): void {
-  if (!isEnabled()) return;
-
-  try {
-    const params = new URLSearchParams();
-
-    // Add version
-    if (cliVersion) {
-      params.set('v', cliVersion);
-    }
-
-    // Add CI flag if running in CI
-    if (isCI()) {
-      params.set('ci', '1');
-    }
-
-    // Add detected AI agent name
-    if (detectedAgentName) {
-      params.set('agent', detectedAgentName);
-    }
-
-    // Add event data
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined && value !== null) {
-        params.set(key, String(value));
-      }
-    }
-
-    // Fire and forget during the workflow, but track the promise and controller so
-    // flushTelemetry() can await it before the process exits and abort hanging sockets.
-    const controller = new AbortController();
-    const p = fetch(`${TELEMETRY_URL}?${params.toString()}`, {
-      signal: controller.signal,
-    })
-      .catch(() => {})
-      .then(() => {});
-    pendingTelemetry.push({ promise: p, controller });
-  } catch {
-    // Silently fail - telemetry should never break the CLI
-  }
-}
-
-/**
- * Wait for all in-flight telemetry requests to settle.
- * Called once at CLI exit so the process doesn't hang on open sockets
- * but also doesn't drop data by exiting too early.
- */
-export async function flushTelemetry(timeoutMs = 5000): Promise<void> {
-  const pending = pendingTelemetry.splice(0);
-  if (pending.length === 0) return;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<void>((resolve) => {
-    timer = setTimeout(resolve, timeoutMs);
-  });
-  await Promise.race([Promise.all(pending.map((item) => item.promise)), timeout]);
-  // The CLI exits by draining the event loop, so neither the timer nor a hung
-  // request may outlive the flush.
-  clearTimeout(timer);
-  for (const item of pending) item.controller.abort();
-}
+/** No usage requests are queued, so CLI exit never needs to wait for them. */
+export async function flushTelemetry(_timeoutMs = 5000): Promise<void> {}

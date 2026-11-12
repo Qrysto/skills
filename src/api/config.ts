@@ -38,7 +38,8 @@ export function resolveConfig(options: BaseOptions & Overrides = {}): ResolvedCo
     includeInternal: pick('includeInternal') ?? false,
     duplicates: pick('duplicates') ?? 'first',
     symlinks: pick('symlinks') ?? 'follow',
-    telemetry: pick('telemetry') ?? true,
+    // Retained in the public options for compatibility; usage tracking is disabled.
+    telemetry: false,
     agents: config.agents ?? {},
   };
 

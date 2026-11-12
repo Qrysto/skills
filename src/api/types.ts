@@ -73,8 +73,8 @@ export interface AgentsConfig {
 export interface SkillsConfig extends InstallSettings {
   agents?: AgentsConfig;
   /**
-   * Send anonymous usage telemetry, as the CLI does. Setting `DISABLE_TELEMETRY`
-   * or `DO_NOT_TRACK` always turns it off. @default true
+   * Retained for compatibility. Usage telemetry is always disabled in this fork.
+   * @default false
    */
   telemetry?: boolean;
 }
@@ -197,8 +197,9 @@ export interface InstallOptions extends BaseOptions, InstallSettings {
    * @default `config.agents.default`, else the agents `skills add -y` picks
    */
   agents?: readonly string[];
+  /** Retained for compatibility; usage telemetry is always disabled. */
   telemetry?: boolean;
-  /** JSON-serializable data attached to install telemetry. */
+  /** Retained for compatibility; usage telemetry is always disabled. */
   metadata?: Readonly<Record<string, unknown>>;
 }
 

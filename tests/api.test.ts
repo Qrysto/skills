@@ -83,7 +83,6 @@ afterEach(() => {
     if (savedEnv[key] === undefined) delete process.env[key];
     else process.env[key] = savedEnv[key];
   }
-  vi.doUnmock('../src/add.ts');
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -317,25 +316,6 @@ describe('installSkills', () => {
       readFileSync(join(process.env.XDG_STATE_HOME!, 'skills/.skill-lock.json'), 'utf-8')
     );
     expect(Object.keys(lock.skills)).toEqual(['alpha']);
-  });
-});
-
-describe('telemetry', () => {
-  it('is sent unless turned off per call or in config', async () => {
-    const trackSourceInstall = vi.fn(async () => {});
-    vi.doMock('../src/add.ts', async (importOriginal) => ({
-      ...(await importOriginal<typeof import('../src/add.ts')>()),
-      trackSourceInstall,
-    }));
-    vi.resetModules();
-    const mocked: Api = await import('../src/index.ts');
-
-    await mocked.installSkills(source, { cwd, skills: ['alpha'], agents: ['cursor'] });
-    expect(trackSourceInstall).toHaveBeenCalledTimes(1);
-
-    await mocked.installSkills(source, { cwd, agents: ['cursor'], telemetry: false });
-    await mocked.installSkills(source, { cwd, agents: ['cursor'], config: { telemetry: false } });
-    expect(trackSourceInstall).toHaveBeenCalledTimes(1);
   });
 });
 
