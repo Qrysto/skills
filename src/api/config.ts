@@ -48,10 +48,10 @@ export function resolveConfig(options: BaseOptions & Overrides = {}): ResolvedCo
       expected: "'project' or 'global'",
     });
   }
-  if (!['auto', 'symlink', 'copy'].includes(resolved.mode)) {
+  if (!['auto', 'symlink', 'copy', 'link'].includes(resolved.mode)) {
     throw diagnostics.SKILLS_INVALID_OPTION_VALUE({
       option: 'mode',
-      expected: "'auto', 'symlink' or 'copy'",
+      expected: "'auto', 'symlink', 'copy' or 'link'",
     });
   }
   if (resolved.duplicates !== 'first' && resolved.duplicates !== 'error') {

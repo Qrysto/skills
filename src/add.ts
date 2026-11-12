@@ -417,11 +417,13 @@ function buildTargetSummaryLines(
     lines.push(`  ${pc.green('universal:')} ${formatList(universal)}`);
   }
   if (symlinked.length > 0) {
-    const label = installMode === 'symlink' ? 'symlink →' : 'copy →';
+    const label = installMode === 'copy' ? 'copy →' : `${installMode} →`;
     lines.push(`  ${pc.dim(label)} ${formatList(symlinked)}`);
   }
   if (subagentNames.length > 0) {
-    lines.push(`  ${pc.dim('copy →')} ${formatList(subagentNames)}`);
+    lines.push(
+      `  ${pc.dim(installMode === 'link' ? 'link →' : 'copy →')} ${formatList(subagentNames)}`
+    );
   }
 
   return lines;
@@ -702,6 +704,8 @@ export interface AddOptions {
   all?: boolean;
   fullDepth?: boolean;
   copy?: boolean;
+  /** Keep local skills linked to their source folders. */
+  link?: boolean;
   /**
    * Eve subagent targets. Each value is a subagent name; `root` (or `.`)
    * selects the root agent. Implies installing for Eve.
@@ -1756,6 +1760,15 @@ export async function installToTargets(
   skills: Skill[],
   placement: InstallPlacement
 ): Promise<TargetInstallResult[]> {
+  if (
+    placement.mode === 'link' &&
+    (resolved.tempDir || resolved.blobResult || skills.some(isWellKnownSourceSkill))
+  ) {
+    throw diagnostics.SKILLS_INVALID_OPTION_VALUE({
+      option: 'mode',
+      expected: "'link' with a local source",
+    });
+  }
   const results: TargetInstallResult[] = [];
   for (const skill of skills) {
     for (const target of placement.targets) {
@@ -2044,8 +2057,8 @@ export async function installFromSource(
     via?: string;
     select?: (skills: Skill[]) => Promise<Skill[]>;
     frozenLock?: LocalSkillLockFile;
-    /** Copy into each agent dir instead of symlinking, and keep that in the lock. */
-    installMode?: 'copy';
+    /** Retain explicit copy or local-source link placement in the lock. */
+    installMode?: 'copy' | 'link';
   }
 ): Promise<SourceInstallResult> {
   const { frozenLock, installMode } = options;
@@ -2103,7 +2116,7 @@ export async function recordProjectLock(
   { parsed, resolved }: FetchedSource,
   installed: InstalledSkill[],
   via?: string,
-  { cwd, installMode }: { cwd?: string; installMode?: 'copy' } = {}
+  { cwd, installMode }: { cwd?: string; installMode?: 'copy' | 'link' } = {}
 ): Promise<void> {
   if (!resolved) return;
   const skills = installed.map(({ skill }) => skill);
@@ -2148,7 +2161,7 @@ export async function recordGlobalLock(
   { parsed, resolved }: FetchedSource,
   skills: Skill[],
   options: {
-    installMode?: 'copy';
+    installMode?: 'copy' | 'link';
     onWriteFailure: (skillName: string, error: unknown) => void;
   }
 ): Promise<void> {
@@ -2440,6 +2453,12 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
   let tempDir: string | null = null;
 
   try {
+    if (options.link && (options.copy || parseSource(source).type !== 'local')) {
+      throw diagnostics.SKILLS_INVALID_OPTION_VALUE({
+        option: '--link',
+        expected: 'a local source without --copy',
+      });
+    }
     let effectiveSource = source;
     let notionSourceLabel: string | null = null;
     let notionDownloads: DownloadRoot[] | undefined;
@@ -2465,6 +2484,7 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
 
     spinner.start('Parsing source…');
     let parsed = parseSource(effectiveSource);
+
     let directDownload = parsed.type === 'download' || notionSourceLabel !== null;
     spinner.stop(
       notionSourceLabel !== null
@@ -2895,9 +2915,13 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
     if (!installGlobally) await readLocalLock();
 
     // Only prompt for install mode when a symlink would actually mean something.
-    let installMode: InstallMode = options.copy ? 'copy' : defaultInstallMode(installTargets);
+    let installMode: InstallMode = options.link
+      ? 'link'
+      : options.copy
+        ? 'copy'
+        : defaultInstallMode(installTargets);
 
-    if (!options.copy && !options.yes && installMode === 'symlink') {
+    if (!options.copy && !options.link && !options.yes && installMode === 'symlink') {
       const modeChoice = await p.select({
         message: 'Installation method',
         options: [
@@ -2919,9 +2943,12 @@ export async function runAdd(args: string[], options: AddOptions = {}): Promise<
     }
     // Recorded only when chosen: otherwise `update` derives the same mode from its targets.
     const lockedInstallMode =
-      installMode === 'copy' && (options.copy || defaultInstallMode(installTargets) === 'symlink')
-        ? { installMode: 'copy' as const }
-        : {};
+      installMode === 'link'
+        ? { installMode: 'link' as const }
+        : installMode === 'copy' &&
+            (options.copy || defaultInstallMode(installTargets) === 'symlink')
+          ? { installMode: 'copy' as const }
+          : {};
 
     const cwd = process.cwd();
 
@@ -3486,6 +3513,7 @@ const ADD_OPTIONS = {
   'full-depth': { type: 'boolean' },
   json: { type: 'boolean' },
   copy: { type: 'boolean' },
+  link: { type: 'boolean' },
   subagent: { type: 'list', value: 'a subagent name' },
 } as const;
 
@@ -3507,8 +3535,15 @@ export function parseAddOptions(args: string[]): {
     fullDepth: values['full-depth'],
     json: values.json,
     copy: values.copy,
+    link: values.link,
     subagent: values.subagent,
   };
+
+  if (values.link && values.copy) {
+    errors.push(
+      diagnostics.SKILLS_INVALID_OPTION_VALUE({ option: '--link', expected: 'used without --copy' })
+    );
+  }
 
   const metadata = values.metadata?.at(-1);
   if (metadata !== undefined) {

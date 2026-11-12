@@ -80,7 +80,7 @@ export function withGlobalSkillsDir(targetAgents: AgentType[]): AgentType[] {
  */
 function placementResolver(
   global: boolean
-): (subagents?: string[], installMode?: 'copy') => Promise<InstallPlacement> {
+): (subagents?: string[], installMode?: 'copy' | 'link') => Promise<InstallPlacement> {
   let agentsPromise: Promise<AgentType[]> | undefined;
   return async (subagents, installMode) => {
     agentsPromise ??= nonInteractiveTargetAgents();
@@ -591,7 +591,7 @@ interface DownloadUpdateItem {
   skillPath?: string;
   hash: string;
   subagents?: string[];
-  installMode?: 'copy';
+  installMode?: 'copy' | 'link';
 }
 
 /**

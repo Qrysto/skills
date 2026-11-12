@@ -71,6 +71,12 @@ async function install(
   const handle = owned ? await openSource(source, config, requested ?? [], options) : source;
   try {
     const fetched = getFetchedSource(handle);
+    if (config.mode === 'link' && fetched.parsed.type !== 'local') {
+      throw diagnostics.SKILLS_INVALID_OPTION_VALUE({
+        option: 'mode',
+        expected: "'link' with a local source",
+      });
+    }
     const skills = selectSkills(fetched, requested);
     if (config.duplicates === 'error') rejectDuplicates(handle, skills);
     if (config.symlinks === 'reject') await rejectSymlinks(fetched, skills);
@@ -102,7 +108,7 @@ async function install(
 
     const installed = await collectInstalled(skills, results);
     if (config.lockfile && installed.length > 0) {
-      await recordLock(fetched, installed, config, config.mode === 'copy');
+      await recordLock(fetched, installed, config);
     }
     if (config.telemetry && installed.length > 0) {
       setVersion(version);
@@ -241,7 +247,7 @@ function buildResult(
           skill: r.skill,
           agent: r.agentType,
           scope: config.scope,
-          mode: r.mode === 'copy' || r.symlinkFailed ? 'copy' : 'symlink',
+          mode: r.symlinkFailed ? 'copy' : r.mode,
           path: r.path,
           ...(r.canonicalPath && { canonicalPath: r.canonicalPath }),
         })
@@ -260,10 +266,10 @@ function buildResult(
 async function recordLock(
   fetched: FetchedSource,
   installed: InstalledSkill[],
-  config: ResolvedConfig,
-  explicitCopy: boolean
+  config: ResolvedConfig
 ): Promise<void> {
-  const lockedInstallMode = explicitCopy ? { installMode: 'copy' as const } : {};
+  const lockedInstallMode =
+    config.mode === 'copy' || config.mode === 'link' ? { installMode: config.mode } : {};
   try {
     if (config.scope === 'project') {
       await recordProjectLock(fetched, installed, undefined, {

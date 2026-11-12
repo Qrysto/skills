@@ -63,6 +63,12 @@ export async function openSource(
   options: Pick<ResolveOptions, 'signal' | 'onProgress' | 'ref'>
 ): Promise<SkillSource> {
   const parsed = withRef(parseSourceInput(input, config.cwd), options.ref);
+  if (config.mode === 'link' && parsed.type !== 'local') {
+    throw diagnostics.SKILLS_INVALID_OPTION_VALUE({
+      option: 'mode',
+      expected: "'link' with a local source",
+    });
+  }
   options.signal?.throwIfAborted();
 
   if (parsed.type === 'local' && !existsSync(parsed.localPath!)) {

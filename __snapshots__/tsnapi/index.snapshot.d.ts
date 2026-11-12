@@ -36,7 +36,7 @@ export interface InstalledSkillTarget {
   readonly skill: string;
   readonly agent: string;
   readonly scope: Scope;
-  readonly mode: 'symlink' | 'copy';
+  readonly mode: 'symlink' | 'copy' | 'link';
   readonly path: string;
   readonly canonicalPath?: string;
 }
@@ -130,7 +130,7 @@ export interface SourceInfo {
 
 // #region Types
 export type DiagnosticCode = keyof typeof diagnostics;
-export type InstallMode = 'auto' | 'symlink' | 'copy';
+export type InstallMode = 'auto' | 'symlink' | 'copy' | 'link';
 export type ProgressEvent = {
   readonly type: 'resolve:start';
   readonly source: string;

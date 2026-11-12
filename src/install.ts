@@ -92,10 +92,10 @@ export async function runInstallFromLock(args: string[]): Promise<void> {
   const modifiedSkills: string[] = [];
   // Lock entries that could not be restored; their lock entries are left untouched
   const failedSkills: string[] = [];
-  // Keyed by source, install mode, and download, so copied skills stay copies
+  // Keyed by source, install mode, and download, so explicit placement is retained.
   const bySource = new Map<
     string,
-    { source: string; copy: boolean; download: boolean; skills: string[] }
+    { source: string; mode: 'copy' | 'link' | undefined; download: boolean; skills: string[] }
   >();
 
   for (const [skillName, entry] of skillEntries) {
@@ -123,10 +123,10 @@ export async function runInstallFromLock(args: string[]): Promise<void> {
       failedSkills.push(skillName);
       continue;
     }
-    const copy = entry.installMode === 'copy';
+    const mode = entry.installMode;
     const download = entry.sourceType === 'download';
-    const key = `${copy ? 'copy' : 'symlink'}:${download ? 'download' : 'source'}:${installSource}`;
-    const group = bySource.get(key) ?? { source: installSource, copy, download, skills: [] };
+    const key = `${mode ?? 'symlink'}:${download ? 'download' : 'source'}:${installSource}`;
+    const group = bySource.get(key) ?? { source: installSource, mode, download, skills: [] };
     group.skills.push(skillName);
     bySource.set(key, group);
   }
@@ -155,9 +155,9 @@ export async function runInstallFromLock(args: string[]): Promise<void> {
     );
   }
   if (syncOptions.dryRun) {
-    for (const { source, copy, skills } of bySource.values()) {
+    for (const { source, mode, skills } of bySource.values()) {
       p.log.message(
-        `${skills.map((name) => pc.cyan(name)).join(', ')} ${pc.dim(`from ${source}${copy ? ' (copy)' : ''}`)}`
+        `${skills.map((name) => pc.cyan(name)).join(', ')} ${pc.dim(`from ${source}${mode ? ` (${mode})` : ''}`)}`
       );
     }
     // Nothing is fetched or installed; node_modules entries below are reported by sync's own dry run.
@@ -167,9 +167,9 @@ export async function runInstallFromLock(args: string[]): Promise<void> {
   }
 
   // Download every source at once, then install them in order
-  const requests = [...bySource.values()].map(({ source, copy, download, skills }) => ({
+  const requests = [...bySource.values()].map(({ source, mode, download, skills }) => ({
     source,
-    copy,
+    mode,
     parsed: download ? { type: 'download' as const, url: source } : parseSource(source),
     skills,
     // A pack or archive can hold its skills at any depth.
@@ -177,11 +177,11 @@ export async function runInstallFromLock(args: string[]): Promise<void> {
   }));
   const fetched = await fetchSources(requests);
   let restoredCount = 0;
-  for (const [index, { source, copy, skills }] of requests.entries()) {
+  for (const [index, { source, mode, skills }] of requests.entries()) {
     const result = await installFromSource(fetched[index]!, {
       skills,
       agents: targetAgents,
-      ...(copy && { installMode: 'copy' as const }),
+      ...(mode && { installMode: mode }),
       ...(frozen && { frozenLock: lock }),
     });
     if (result.error) {
@@ -251,7 +251,7 @@ async function linkInstalledSkills(
 ): Promise<void> {
   for (const name of skillNames) {
     const path = getCanonicalPath(name, { cwd });
-    const mode = lock.skills[name]?.installMode === 'copy' ? 'copy' : 'symlink';
+    const mode = lock.skills[name]?.installMode ?? 'symlink';
     for (const agent of targetAgents) {
       if (existsSync(getInstallPath(name, agent, { cwd }))) continue;
       const result = await installSkillForAgent({ name, description: '', path }, agent, {

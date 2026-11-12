@@ -170,6 +170,33 @@ describe('resolveSource', () => {
 });
 
 describe('installSkills', () => {
+  it('keeps local source edits live after disposing the handle and records link mode', async () => {
+    const handle = await api.resolveSource(source, { cwd });
+    const result = await api.installSkills(handle, {
+      cwd,
+      skills: ['alpha'],
+      agents: ['claude-code', 'universal'],
+      config: { mode: 'link' },
+    });
+    await handle.dispose();
+    expect(result.failed).toEqual([]);
+    expect(result.installed.map((target) => target.mode)).toEqual(['link', 'link']);
+    expect(lstatSync(join(cwd, '.agents/skills/alpha')).isSymbolicLink()).toBe(true);
+    const content = '---\nname: alpha\ndescription: Updated\n---\nLive edit\n';
+    writeFileSync(join(source, 'skills/alpha/SKILL.md'), content);
+    expect(readFileSync(join(cwd, '.claude/skills/alpha/SKILL.md'), 'utf8')).toBe(content);
+    const lock = JSON.parse(readFileSync(join(cwd, 'skills-lock.json'), 'utf8'));
+    expect(lock.skills.alpha.installMode).toBe('link');
+  });
+
+  it('rejects link mode for remote sources without installing', async () => {
+    await expectCode(
+      api.installSkills('owner/repo', { cwd, mode: 'link' }),
+      'SKILLS_INVALID_OPTION_VALUE'
+    );
+    expect(existsSync(join(cwd, '.agents'))).toBe(false);
+  });
+
   it('installs the named skills into the named agents and records the project lock', async () => {
     const events: string[] = [];
     const result = await api.installSkills(source, {

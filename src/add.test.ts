@@ -61,6 +61,57 @@ describe('add command', () => {
     }
   });
 
+  it('links a local source, restores the link, and removes it without deleting the source', () => {
+    const sourceDir = join(testDir, 'source');
+    mkdirSync(sourceDir);
+    writeFileSync(join(sourceDir, 'SKILL.md'), '---\nname: live-skill\ndescription: Live\n---\n');
+    const args = ['add', sourceDir, '--link', '-a', 'universal', 'claude-code', '-y', '--json'];
+    const added = runCli(args, testDir);
+    expect(added.exitCode, added.stdout + added.stderr).toBe(0);
+    expect(JSON.parse(added.stdout)[0].mode).toBe('link');
+    const canonical = join(testDir, '.agents/skills/live-skill');
+    expect(lstatSync(canonical).isSymbolicLink()).toBe(true);
+    const content = '---\nname: live-skill\ndescription: Edited\n---\nLive edit\n';
+    writeFileSync(join(sourceDir, 'SKILL.md'), content);
+    expect(readFileSync(join(testDir, '.claude/skills/live-skill/SKILL.md'), 'utf8')).toBe(content);
+    rmSync(canonical);
+    const restored = runCli(
+      ['install', '--force', '-a', 'universal', 'claude-code', '-y'],
+      testDir
+    );
+    expect(restored.exitCode, restored.stdout + restored.stderr).toBe(0);
+    expect(lstatSync(canonical).isSymbolicLink()).toBe(true);
+    const restoredContent = `${content}Edited after restore\n`;
+    writeFileSync(join(sourceDir, 'SKILL.md'), restoredContent);
+    expect(readFileSync(join(testDir, '.claude/skills/live-skill/SKILL.md'), 'utf8')).toBe(
+      restoredContent
+    );
+    const removed = runCli(
+      ['remove', 'live-skill', '-a', 'universal', 'claude-code', '-y'],
+      testDir
+    );
+    expect(removed.exitCode, removed.stdout + removed.stderr).toBe(0);
+    expect(existsSync(canonical)).toBe(false);
+    expect(existsSync(join(testDir, '.claude/skills/live-skill'))).toBe(false);
+    expect(readFileSync(join(sourceDir, 'SKILL.md'), 'utf8')).toBe(restoredContent);
+  });
+
+  it.each([
+    { source: 'owner/repo', extra: [], expected: 'local source' },
+    { source: './source', extra: ['--copy'], expected: 'without --copy' },
+  ])('rejects incompatible link arguments for $source', ({ source, extra, expected }) => {
+    const sourceDir = join(testDir, 'source');
+    mkdirSync(sourceDir);
+    writeFileSync(join(sourceDir, 'SKILL.md'), '---\nname: live-skill\ndescription: Live\n---\n');
+    const result = runCli(
+      ['add', source, '--link', ...extra, '-a', 'universal', '-y', '--json'],
+      testDir
+    );
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain(expected);
+    expect(existsSync(join(testDir, '.agents'))).toBe(false);
+  });
+
   it('finds an explicitly requested nested skill below a root skill', () => {
     const sourceDir = join(testDir, 'source');
     const nestedDir = join(sourceDir, 'discovery', 'nested-skill');

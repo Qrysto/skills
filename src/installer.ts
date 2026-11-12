@@ -417,8 +417,12 @@ export async function installSkillForAgent(
       if (installMode === 'link') {
         // Link mode: the canonical dir itself points at the source, nothing is copied.
         if (!(await createSymlink(skill.path, canonicalDir))) {
-          await cleanAndCreateDirectory(canonicalDir);
-          await copyDirectory(skill.path, canonicalDir, agentType);
+          return {
+            success: false,
+            path: canonicalDir,
+            mode: installMode,
+            error: 'Could not link the canonical skill directory to its source',
+          };
         }
       } else {
         // Symlink mode: copy to canonical location and symlink to agent location
@@ -464,6 +468,15 @@ export async function installSkillForAgent(
     const symlinkCreated = await createSymlink(canonicalDir, agentDir);
 
     if (!symlinkCreated) {
+      if (installMode === 'link') {
+        return {
+          success: false,
+          path: agentDir,
+          canonicalPath: canonicalDir,
+          mode: installMode,
+          error: 'Could not link the agent skill directory',
+        };
+      }
       // Symlink failed, fall back to copy
       await cleanAndCreateDirectory(agentDir);
       await copyDirectory(skill.path, agentDir, agentType);

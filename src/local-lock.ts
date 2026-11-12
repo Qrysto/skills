@@ -56,8 +56,8 @@ export interface LocalSkillLockEntry {
    */
   subagents?: string[];
   wellKnownDigest?: string;
-  /** Set when the user chose copies over symlinks, so `update` reinstalls copies. */
-  installMode?: 'copy';
+  /** Explicit copy or local-source link mode, retained when restoring the skill. */
+  installMode?: 'copy' | 'link';
 }
 
 /**

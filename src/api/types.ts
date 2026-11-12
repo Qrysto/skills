@@ -18,8 +18,10 @@ export type Scope = 'project' | 'global';
  * How skills are placed into agent directories. `auto` symlinks from one
  * canonical copy when targets span several skills directories and copies
  * otherwise, the same choice `skills add -y` makes.
+ * `link` requires a local source and keeps the canonical directory linked to
+ * that source so edits are immediately available; link failures are errors.
  */
-export type InstallMode = 'auto' | 'symlink' | 'copy';
+export type InstallMode = 'auto' | 'symlink' | 'copy' | 'link';
 
 /** The kind of source a skill came from. */
 export type SourceType = 'github' | 'gitlab' | 'git' | 'local' | 'well-known' | 'download';
@@ -47,7 +49,8 @@ export interface InstallSettings {
    * Symlinks inside a skill folder: `follow` copies what in-skill links point
    * to and skips unsafe ones with a warning; `reject` makes installSkills throw
    * SKILLS_SKILL_CONTAINS_SYMLINKS before writing anything when a selected skill contains a
-   * symlink. @default 'follow'
+   * symlink. In `link` mode the source tree is exposed directly without copy
+   * filtering; `reject` still checks the source before linking. @default 'follow'
    */
   symlinks?: 'follow' | 'reject';
 }
@@ -204,7 +207,7 @@ export interface InstalledSkillTarget {
   readonly skill: string;
   readonly agent: string;
   readonly scope: Scope;
-  readonly mode: 'symlink' | 'copy';
+  readonly mode: 'symlink' | 'copy' | 'link';
   /** Where the agent reads the skill from. */
   readonly path: string;
   /** The shared copy agents link to, when there is one. */

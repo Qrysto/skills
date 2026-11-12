@@ -73,6 +73,7 @@ For GitHub tree lookups, `skills` first tries the API anonymously, then an expli
 | `-s, --skill <skills...>` | Install specific skills by name (use `'*'` for all skills)                                                                                                  |
 | `-l, --list`              | List available skills without installing                                                                                                                    |
 | `--copy`                  | Copy files instead of symlinking to agent directories                                                                                                       |
+| `--link`                  | Link local source folders directly; source edits are immediately available. Cannot be combined with `--copy`. |
 | `-y, --yes`               | Skip all confirmation prompts                                                                                                                               |
 | `--all`                   | Install all skills to all agents without prompts                                                                                                            |
 
@@ -126,6 +127,18 @@ When installing interactively, you can choose:
 | ------------------------- | ------------------------------------------------------------------------------------------- |
 | **Symlink** (Recommended) | Creates symlinks from each agent to a canonical copy. Single source of truth, easy updates. |
 | **Copy**                  | Creates independent copies for each agent. Use when symlinks aren't supported.              |
+
+For local development, use `skills add ./my-skills --link -y`. This links
+`.agents/skills/<name>` to the original skill folder and agent directories to
+that shared link. Changes to the source are immediately available. Windows
+uses directory junctions. Link creation errors fail the install instead of
+silently copying files. The source folder must remain at the same location.
+
+`--link` accepts local sources only and cannot be combined with `--copy`.
+The lock records link mode, and `skills install` restores links. Local sources
+are skipped by `skills check` and `skills update`; edit or update the source
+directly. Links expose the whole source folder, including its symlinks, rather
+than applying the copy mode's file filtering.
 
 ## `skills use`
 

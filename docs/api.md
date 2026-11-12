@@ -95,6 +95,12 @@ await installSkills(source, {
   `add -y` would pick (the agent you run inside, else the detected ones).
   Without `mode`, skills are symlinked from one shared copy when targets use
   different directories, and copied otherwise.
+- **Live local links.** `installSkills('./my-skills', { mode: 'link' })` keeps
+  the canonical directory linked to the source. Source edits are immediately
+  available, and disposing a resolved local source leaves the links usable.
+  Remote sources are rejected, and link creation failures are reported in
+  `result.failed`. Keep the source at the same location. Link mode exposes the
+  whole source tree without copy filtering; `symlinks: 'reject'` still checks it.
 - **Lock files.** Installs and removals update `skills-lock.json` (project) or
   the global lock unless `lockfile: false`, so `skills update` and
   `skills experimental_install` keep working.
@@ -119,7 +125,7 @@ import type { SkillsConfig } from 'skills';
 
 const config: SkillsConfig = {
   scope: 'project', // 'project' | 'global'
-  mode: 'auto', // 'auto' | 'symlink' | 'copy'
+  mode: 'auto', // 'auto' | 'symlink' | 'copy' | 'link'
   lockfile: true,
   fullDepth: false,
   includeInternal: false,
