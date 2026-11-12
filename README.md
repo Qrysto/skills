@@ -1,19 +1,19 @@
-# skills
+# @krysto/skills
 
-The CLI for the open agent skills ecosystem.
+A fork of [vercel-labs/skills](https://github.com/vercel-labs/skills) with live local skill links (`--link`) and usage telemetry disabled.
 
 Agent skills are reusable instructions that teach coding agents how to perform tasks,
 from reviewing code to working with a library. Discover skills at [skills.sh](https://skills.sh).
 
 <!-- agent-list:start -->
+
 Supports **OpenCode**, **Claude Code**, **Codex**, **Cursor**, and [75 more](docs/agents.md).
 <!-- agent-list:end -->
 
 <p>
-  <a href="https://vercel.com/labs#labs-products"><img alt="Vercel Labs Product" src="https://img.shields.io/badge/LABS-PRODUCT-0a0a0a.svg?style=for-the-badge&amp;logo=Vercel&amp;labelColor=000000" height="28"></a>
-  <a href="https://www.npmjs.com/package/skills"><img alt="npm version: skills" src="https://img.shields.io/npm/v/skills.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
-  <a href="https://github.com/vercel-labs/skills/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/vercel-labs/skills.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
-  <a href="https://www.npmjs.com/package/skills"><img alt="npm downloads per month: skills" src="https://img.shields.io/npm/dm/skills.svg?style=for-the-badge&amp;labelColor=000000&amp;label=npm%20downloads" height="28"></a>
+  <a href="https://www.npmjs.com/package/@krysto/skills"><img alt="npm version: @krysto/skills" src="https://img.shields.io/npm/v/@krysto/skills.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
+  <a href="https://github.com/Qrysto/skills/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/Qrysto/skills.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
+  <a href="https://www.npmjs.com/package/@krysto/skills"><img alt="npm downloads per month: @krysto/skills" src="https://img.shields.io/npm/dm/@krysto/skills.svg?style=for-the-badge&amp;labelColor=000000&amp;label=npm%20downloads" height="28"></a>
   <a href="https://skills.sh/vercel-labs/skills"><img alt="skills.sh" src="https://skills.sh/b/vercel-labs/skills?style=for-the-badge" height="28"></a>
 </p>
 
@@ -22,7 +22,7 @@ Supports **OpenCode**, **Claude Code**, **Codex**, **Cursor**, and [75 more](doc
 Requires Node.js 22.20 or later. Run this from your project:
 
 ```bash
-npx skills add vercel-labs/agent-skills
+npx @krysto/skills add vercel-labs/agent-skills
 ```
 
 Choose the skills and coding agents to install to. Skills are installed to the current
@@ -30,10 +30,10 @@ project by default; add `-g` to make them available across projects.
 
 ```bash
 # Choose one skill and agent
-npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code
+npx @krysto/skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code
 
 # Browse available skills
-npx skills find
+npx @krysto/skills find
 ```
 
 See the [installation reference](docs/commands.md#skills-add) for source formats,
@@ -41,24 +41,24 @@ private repositories, and all options.
 
 ## Other Commands
 
-| Command                           | Description                      |
-| --------------------------------- | -------------------------------- |
-| `npx skills find [query]`         | Search for skills                |
-| `npx skills list`                 | List installed skills            |
-| `npx skills use <source>@<skill>` | Use one skill without installing |
-| `npx skills check`                | Check for available updates      |
-| `npx skills update [skills...]`   | Update installed skills          |
-| `npx skills remove [skills...]`   | Remove installed skills          |
-| `npx skills init [name]`          | Create a skill template          |
+| Command                                   | Description                      |
+| ----------------------------------------- | -------------------------------- |
+| `npx @krysto/skills find [query]`         | Search for skills                |
+| `npx @krysto/skills list`                 | List installed skills            |
+| `npx @krysto/skills use <source>@<skill>` | Use one skill without installing |
+| `npx @krysto/skills check`                | Check for available updates      |
+| `npx @krysto/skills update [skills...]`   | Update installed skills          |
+| `npx @krysto/skills remove [skills...]`   | Remove installed skills          |
+| `npx @krysto/skills init [name]`          | Create a skill template          |
 
-Read the [CLI reference](docs/commands.md) or run `npx skills --help` for examples and options. Experimental commands are listed [below](#experimental-features).
+Read the [CLI reference](docs/commands.md) or run `npx @krysto/skills --help` for examples and options. Experimental commands are listed [below](#experimental-features).
 
 ## Use a Skill Without Installing
 
 Generate a prompt for a skill, or launch a supported coding agent with it:
 
 ```bash
-npx skills use vercel-labs/agent-skills@web-design-guidelines --agent claude-code
+npx @krysto/skills use vercel-labs/agent-skills@web-design-guidelines --agent claude-code
 ```
 
 Omit `--agent` to print the prompt instead. See [`skills use`](docs/commands.md#skills-use).
@@ -68,16 +68,16 @@ Omit `--agent` to print the prompt instead. See [`skills use`](docs/commands.md#
 <details>
 <summary>Commands prefixed with <code>experimental_</code> are previews. Their names, options, and behavior may change or be removed in any release without notice.</summary>
 
-| Command                           | Description                                               |
-| --------------------------------- | --------------------------------------------------------- |
-| `npx skills experimental_sync`    | Sync skills shipped by npm dependencies into your project |
-| `npx skills experimental_install` | Restore project skills recorded in `skills-lock.json`     |
+| Command                                   | Description                                               |
+| ----------------------------------------- | --------------------------------------------------------- |
+| `npx @krysto/skills experimental_sync`    | Sync skills shipped by npm dependencies into your project |
+| `npx @krysto/skills experimental_install` | Restore project skills recorded in `skills-lock.json`     |
 
 Some npm packages bundle instructions for your agent alongside their code. Sync links them into your project so they update with the dependency, and also installs skill packs declared in `package.json`:
 
 ```bash
-npm install -D skills agent-browser
-npx skills experimental_sync -y
+npm install -D @krysto/skills agent-browser
+npx @krysto/skills experimental_sync -y
 ```
 
 See the [experimental commands reference](docs/commands.md#experimental-commands) for options, the `skills` field, and the [RFC](https://github.com/vercel-labs/skills/issues/2323) behind it.
@@ -97,11 +97,11 @@ See the [experimental commands reference](docs/commands.md#experimental-commands
 
 Test vectors:
 
-| Files                                        | `computedHash`                                                     |
-| -------------------------------------------- | ------------------------------------------------------------------ |
-| none                                         | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
-| `SKILL.md` = `# hi\n`                         | `93c36952d8843b33e68ae970ebabcc03e1687c9bb0dd1ecaf357060318952f55` |
-| `SKILL.md` = `a\n`, `docs/b.md` = `b\n`        | `b22c4d22aa319d2924312fa18fcbfedc88fa89c74dbd8f298c683e1caf7b7f24` |
+| Files                                   | `computedHash`                                                     |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| none                                    | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `SKILL.md` = `# hi\n`                   | `93c36952d8843b33e68ae970ebabcc03e1687c9bb0dd1ecaf357060318952f55` |
+| `SKILL.md` = `a\n`, `docs/b.md` = `b\n` | `b22c4d22aa319d2924312fa18fcbfedc88fa89c74dbd8f298c683e1caf7b7f24` |
 
 The last vector equals `printf 'SKILL.md\0002\000a\ndocs/b.md\0002\000b\n' | sha256sum`.
 
@@ -115,7 +115,7 @@ See [all supported agents, installation paths, and compatibility](docs/agents.md
 ## Creating Skills
 
 ```bash
-npx skills init my-skill
+npx @krysto/skills init my-skill
 ```
 
 Edit the generated `SKILL.md` with instructions for your agent.
@@ -127,13 +127,15 @@ See [creating and sharing skills](docs/creating-skills.md) for the format and di
 - [Supported agents](docs/agents.md): agent names, skill directories, and compatibility
 - [Creating skills](docs/creating-skills.md): frontmatter, repository layouts, and plugins
 - [Troubleshooting and configuration](docs/troubleshooting.md): common problems, environment variables, and telemetry
-- [Programmatic API](docs/api.md): install and manage skills from your own tools with `import { installSkills } from 'skills'`
+- [Publishing this fork](docs/publishing.md): first release and GitHub Actions setup
+- [Programmatic API](docs/api.md): install and manage skills from your own tools with `import { installSkills } from '@krysto/skills'`
 
 ## Telemetry
 
-The CLI collects anonymous usage data. Set `DISABLE_TELEMETRY=1` or `DO_NOT_TRACK=1`
-to disable telemetry and security-audit requests.
-See [what is collected](docs/troubleshooting.md#telemetry).
+Usage telemetry is disabled in this fork, including when API callers pass `telemetry: true`.
+Discovery and security audits still use upstream skills.sh services. Set
+`DISABLE_TELEMETRY=1` or `DO_NOT_TRACK=1` to disable audit requests too.
+See [network behavior](docs/troubleshooting.md#telemetry).
 
 ## Related Links
 

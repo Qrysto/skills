@@ -4,15 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: 'Version bump type'
+        description: 'Publish the current version, or bump it first'
         required: true
+        default: current
         type: choice
         options:
+          - current
           - patch
           - minor
 
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
+    if: github.repository == 'Qrysto/skills' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: npm-publish
     permissions:
@@ -24,7 +31,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
@@ -32,73 +38,80 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
-          cache: pnpm
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Ensure npm supports trusted publishing
+        run: npm install --global npm@11
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
+      - name: Prepare version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          if [ "$BUMP" != current ]; then
+            npm version "$BUMP" --no-git-tag-version
+          fi
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (name !== '@krysto/skills') throw new Error('Unexpected package name');
+          if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Expected a stable version');
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\ntag=krysto-v${version}\n`);
+          NODE
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # The fork uses the Actions identity rather than upstream signing secrets.
+          if ! git diff --quiet -- package.json; then
+            git add package.json
+            git commit -m "Release @krysto/skills"
+          fi
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Build selected version
         run: pnpm build
 
-      - name: Import GPG signing key
-        # Pinned to a maintainer-owned fork of crazy-max/ghaction-import-gpg
-        # so a compromise of the upstream namespace can't push malicious code
-        # into our release pipeline. Update the SHA deliberately when pulling
-        # upstream changes.
-        uses: quuu/ghaction-import-gpg@72c784c2e295f26ec09b0c20761c93711beaa338
-        with:
-          gpg_private_key: ${{ secrets.PUBLISH_BOT_GPG_PRIVATE_KEY }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-          git_tag_gpgsign: true
-          git_config_global: true
+      - name: Tests
+        run: pnpm exec vitest run
 
-      - name: Reset generated files
-        run: |
-          git checkout -- ThirdPartyNoticeText.txt || true
+      - name: Check packed package
+        run: pnpm test:e2e package.e2e.ts
 
-      - name: Bump version
+      - name: Check release tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          npm version ${{ inputs.bump }} -m "v%s"
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            echo "Release tag $TAG already exists. Choose a new version."
+            exit 1
+          fi
 
-      - name: Push changes
-        run: |
-          git push
-          git push --tags
+      - name: Push validated release commit
+        # Preserve the exact version commit for retry/recovery before uploading.
+        run: git push origin HEAD:main
 
       - name: Publish to npm
-        id: publish
+        # npm exchanges the GitHub OIDC token; no npm token secret is required.
         run: npm publish --provenance --access public
 
-      - name: Create GitHub Release
-        if: steps.publish.outcome == 'success'
+      - name: Push release tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          git tag "$TAG"
+          git push origin "refs/tags/$TAG"
 
-          # Get changelog from merged PRs since last tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$LATEST_TAG" ]; then
-            SINCE=""
-          else
-            SINCE=$(git log -1 --format=%cI ${LATEST_TAG})
-          fi
-
-          # Fetch merged PRs and format as changelog
-          if [ -z "$SINCE" ]; then
-            PRS=$(gh pr list --state merged --json number,title,author --limit 100)
-          else
-            PRS=$(gh pr list --state merged --search "merged:>=${SINCE}" --json number,title,author --limit 100)
-          fi
-
-          CHANGELOG=$(echo "$PRS" | jq -r '.[] | "- \(.title) (#\(.number))"')
-          CONTRIBUTORS=$(echo "$PRS" | jq -r '.[].author.login' | sort -u | sed 's/^/@/' | paste -sd ', ' -)
-
-          # Generate release notes from template
-          export VERSION CHANGELOG CONTRIBUTORS
-          envsubst < .github/RELEASE_TEMPLATE.md > release-notes.md
-
-          gh release create "v${VERSION}" --notes-file release-notes.md
+      - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh release create "$TAG" --generate-notes --title "@krysto/skills ${TAG#krysto-v}"

@@ -2,43 +2,43 @@
 
 [Back to the README](../README.md)
 
-Run commands with `npx skills <command>`. For all available options, run `npx skills --help`.
+Run commands with `npx @krysto/skills <command>`. For all available options, run `npx @krysto/skills --help`.
 
 ## `skills add`
 
 Install skills from a repository, URL, or local directory:
 
 ```bash
-npx skills add vercel-labs/agent-skills
+npx @krysto/skills add vercel-labs/agent-skills
 ```
 
 ### Source Formats
 
 ```bash
 # GitHub shorthand (owner/repo)
-npx skills add vercel-labs/agent-skills
+npx @krysto/skills add vercel-labs/agent-skills
 
 # Pin a release tag or full commit. Skill names still use the same @ form.
-npx skills add owner/repo@v1.2.3 --skill my-skill
+npx @krysto/skills add owner/repo@v1.2.3 --skill my-skill
 
 # Full GitHub URL
-npx skills add https://github.com/vercel-labs/agent-skills
+npx @krysto/skills add https://github.com/vercel-labs/agent-skills
 
 # Direct path to a skill in a repo
-npx skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines
+npx @krysto/skills add https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines
 
 # GitLab URL
-npx skills add https://gitlab.com/org/repo
+npx @krysto/skills add https://gitlab.com/org/repo
 
 # Azure Repos (Azure DevOps Services or Server)
-npx skills add https://dev.azure.com/org/project/_git/repo
-npx skills add https://dev.azure.com/org/project/_git/repo?path=/skills/web-design&version=GBmain
+npx @krysto/skills add https://dev.azure.com/org/project/_git/repo
+npx @krysto/skills add https://dev.azure.com/org/project/_git/repo?path=/skills/web-design&version=GBmain
 
 # Any git URL
-npx skills add git@github.com:vercel-labs/agent-skills.git
+npx @krysto/skills add git@github.com:vercel-labs/agent-skills.git
 
 # Local path
-npx skills add ./my-local-skills
+npx @krysto/skills add ./my-local-skills
 ```
 
 ### Private Repositories
@@ -47,15 +47,15 @@ Use the same command for public and private repositories. The CLI uses the authe
 
 ```bash
 # GitHub shorthand or HTTPS (Git credential helper, GitHub CLI, then SSH fallback)
-npx skills add acme/private-skills
+npx @krysto/skills add acme/private-skills
 
 # SSH on GitHub, GitLab, or another Git host
-npx skills add git@github.com:acme/private-skills.git
-npx skills add ssh://git@git.example.com/acme/private-skills.git
+npx @krysto/skills add git@github.com:acme/private-skills.git
+npx @krysto/skills add ssh://git@git.example.com/acme/private-skills.git
 
 # HTTPS on any Git host (uses your configured Git credential helper)
-npx skills add https://git.example.com/acme/private-skills.git
-npx skills add https://dev.azure.com/org/project/_git/private-skills
+npx @krysto/skills add https://git.example.com/acme/private-skills.git
+npx @krysto/skills add https://dev.azure.com/org/project/_git/private-skills
 ```
 
 For GitHub HTTPS and shorthand sources, `skills` first uses normal Git credentials. If that fails and GitHub CLI is authenticated, it tries `gh repo clone`, followed by SSH. It does not execute `gh auth token` or copy the stored GitHub CLI credential into the Node.js process.
@@ -73,7 +73,7 @@ For GitHub tree lookups, `skills` first tries the API anonymously, then an expli
 | `-s, --skill <skills...>` | Install specific skills by name (use `'*'` for all skills)                                                                                                  |
 | `-l, --list`              | List available skills without installing                                                                                                                    |
 | `--copy`                  | Copy files instead of symlinking to agent directories                                                                                                       |
-| `--link`                  | Link local source folders directly; source edits are immediately available. Cannot be combined with `--copy`. |
+| `--link`                  | Link local source folders directly; source edits are immediately available. Cannot be combined with `--copy`.                                               |
 | `-y, --yes`               | Skip all confirmation prompts                                                                                                                               |
 | `--all`                   | Install all skills to all agents without prompts                                                                                                            |
 
@@ -81,31 +81,31 @@ For GitHub tree lookups, `skills` first tries the API anonymously, then an expli
 
 ```bash
 # List skills in a repository
-npx skills add vercel-labs/agent-skills --list
+npx @krysto/skills add vercel-labs/agent-skills --list
 
 # Install specific skills
-npx skills add vercel-labs/agent-skills --skill frontend-design --skill skill-creator
+npx @krysto/skills add vercel-labs/agent-skills --skill frontend-design --skill skill-creator
 
 # Install a skill with spaces in the name (must be quoted)
-npx skills add owner/repo --skill "Convex Best Practices"
+npx @krysto/skills add owner/repo --skill "Convex Best Practices"
 
 # Install to specific agents
-npx skills add vercel-labs/agent-skills -a claude-code -a opencode
+npx @krysto/skills add vercel-labs/agent-skills -a claude-code -a opencode
 
 # Non-interactive installation (CI/CD friendly)
-npx skills add vercel-labs/agent-skills --skill frontend-design -g -a claude-code -y
+npx @krysto/skills add vercel-labs/agent-skills --skill frontend-design -g -a claude-code -y
 
 # Install all skills from a repo to all agents
-npx skills add vercel-labs/agent-skills --all
+npx @krysto/skills add vercel-labs/agent-skills --all
 
 # Install all skills to specific agents
-npx skills add vercel-labs/agent-skills --skill '*' -a claude-code
+npx @krysto/skills add vercel-labs/agent-skills --skill '*' -a claude-code
 
 # Install specific skills to all agents
-npx skills add vercel-labs/agent-skills --agent '*' --skill frontend-design
+npx @krysto/skills add vercel-labs/agent-skills --agent '*' --skill frontend-design
 
 # Install from a direct SKILL.md or archive download URL
-npx skills add https://example.com/download/my-skill
+npx @krysto/skills add https://example.com/download/my-skill
 ```
 
 Direct download URLs are tried after well-known discovery. They may point to a single valid `SKILL.md` file or a `.zip`, `.tar`, `.tar.gz`, or `.tgz` archive; the URL does not need to include a file extension. Downloads are limited to 10 MiB, extracted content to 25 MiB, and archives to 1000 files by default. Override with `SKILLS_DOWNLOAD_MAX_BYTES`, `SKILLS_EXTRACT_MAX_BYTES`, and `SKILLS_EXTRACT_MAX_FILES` when you trust the source.
@@ -145,8 +145,8 @@ than applying the copy mode's file filtering.
 Generate a prompt for one skill, or start a supported coding agent interactively:
 
 ```bash
-npx skills use vercel-labs/agent-skills@web-design-guidelines | claude
-npx skills use vercel-labs/agent-skills --skill web-design-guidelines --agent claude-code
+npx @krysto/skills use vercel-labs/agent-skills@web-design-guidelines | claude
+npx @krysto/skills use vercel-labs/agent-skills --skill web-design-guidelines --agent claude-code
 ```
 
 `skills use` resolves sources the same way as `skills add`, writes the selected skill files to a temporary directory, and prints only the generated prompt to stdout unless `--agent` is provided. With `--agent`, it starts one supported agent interactively with the generated prompt.
@@ -157,13 +157,13 @@ List all installed skills. Similar to `npm ls`.
 
 ```bash
 # List project installed skills
-npx skills list
+npx @krysto/skills list
 
 # List only global skills
-npx skills ls -g
+npx @krysto/skills ls -g
 
 # Filter by specific agents
-npx skills ls -a claude-code -a cursor
+npx @krysto/skills ls -a claude-code -a cursor
 ```
 
 Project skills are compared with `skills-lock.json`. A skill whose files no longer match
@@ -177,13 +177,13 @@ Search for skills interactively or by keyword.
 
 ```bash
 # Interactive search (fzf-style)
-npx skills find
+npx @krysto/skills find
 
 # Search by keyword
-npx skills find typescript
+npx @krysto/skills find typescript
 
 # Search across every repository owned by an organization or user
-npx skills find react --owner vercel
+npx @krysto/skills find react --owner vercel
 ```
 
 ## `skills check`
@@ -191,7 +191,7 @@ npx skills find react --owner vercel
 Check installed skills for available updates without reinstalling them:
 
 ```bash
-npx skills check
+npx @krysto/skills check
 ```
 
 It also reports project skills whose installed files differ from the content hash in
@@ -202,20 +202,20 @@ update or local changes, so it can gate CI.
 
 ```bash
 # Update all skills (interactive scope prompt)
-npx skills update
+npx @krysto/skills update
 
 # Update a single skill by name
-npx skills update my-skill
+npx @krysto/skills update my-skill
 
 # Update multiple specific skills
-npx skills update frontend-design web-design-guidelines
+npx @krysto/skills update frontend-design web-design-guidelines
 
 # Update only global or project skills
-npx skills update -g
-npx skills update -p
+npx @krysto/skills update -g
+npx @krysto/skills update -p
 
 # Non-interactive (auto-detects scope: project if in a project, else global)
-npx skills update -y
+npx @krysto/skills update -y
 ```
 
 | Option          | Description                                                               |
@@ -231,10 +231,10 @@ A skill installed from a direct download is downloaded again and reinstalled whe
 
 ```bash
 # Create SKILL.md in current directory
-npx skills init
+npx @krysto/skills init
 
 # Create a new skill in a subdirectory
-npx skills init my-skill
+npx @krysto/skills init my-skill
 ```
 
 ## `skills remove`
@@ -243,34 +243,34 @@ Remove installed skills from agents.
 
 ```bash
 # Remove interactively (select from installed skills)
-npx skills remove
+npx @krysto/skills remove
 
 # Remove all skills from an exact lock source
-npx skills remove owner/repo
+npx @krysto/skills remove owner/repo
 
 # Remove specific skill by name
-npx skills remove web-design-guidelines
+npx @krysto/skills remove web-design-guidelines
 
 # Remove multiple skills
-npx skills remove frontend-design web-design-guidelines
+npx @krysto/skills remove frontend-design web-design-guidelines
 
 # Remove from global scope
-npx skills remove --global web-design-guidelines
+npx @krysto/skills remove --global web-design-guidelines
 
 # Remove from specific agents only
-npx skills remove --agent claude-code cursor my-skill
+npx @krysto/skills remove --agent claude-code cursor my-skill
 
 # Remove all lock-tracked skills without confirmation
-npx skills remove --all
+npx @krysto/skills remove --all
 
 # Remove all skills from a specific agent
-npx skills remove --skill '*' -a cursor
+npx @krysto/skills remove --skill '*' -a cursor
 
 # Remove a specific skill from all agents
-npx skills remove my-skill --agent '*'
+npx @krysto/skills remove my-skill --agent '*'
 
 # Use 'rm' alias
-npx skills rm my-skill
+npx @krysto/skills rm my-skill
 ```
 
 | Option         | Description                                      |
@@ -285,7 +285,7 @@ npx skills rm my-skill
 (`skills-lock.json` for a project, the global lock with `-g`). Skill folders
 the lock does not track, such as skills you wrote by hand, are listed as
 skipped and never deleted. To remove one of them, name it:
-`npx skills remove my-skill`.
+`npx @krysto/skills remove my-skill`.
 
 ## Experimental commands
 
@@ -301,8 +301,8 @@ supported as a compatibility alias for users of skills@1.7.3.
 Install a package that ships skills, then sync them into your project:
 
 ```bash
-npm install -D skills agent-browser
-npx skills experimental_sync -y
+npm install -D @krysto/skills agent-browser
+npx @krysto/skills experimental_sync -y
 ```
 
 Sync reads installed dependencies declared in your project's `package.json`, including
@@ -316,7 +316,7 @@ The `.agents/skills/` directory is the shared location. Selecting Claude Code al
 creates links under `.claude/skills/` pointing to the shared skills:
 
 ```bash
-npx skills experimental_sync -a claude-code -y
+npx @krysto/skills experimental_sync -a claude-code -y
 ```
 
 Outside an agent, sync detects installed agents. When run inside a coding agent,
@@ -361,19 +361,19 @@ When two skills share a name, sync applies these rules in order:
 3. Two packages at the same level shipping the same skill name install neither.
    Pick one with `--exclude <package>#<skill>`.
 
-| Option                    | Description                                                   |
-| ------------------------- | ------------------------------------------------------------- |
-| `-a, --agent <agents...>` | Select agent directories                                      |
-| `-y, --yes`               | Skip confirmation prompts                                     |
-| `--dry-run`               | Show the plan without installing or removing skills           |
-| `--copy`                  | Copy packaged skills instead of linking them                  |
-| `--no-cleanup`            | Keep skills that are no longer provided                       |
-| `--no-remote`             | Skip installing and removing remote skills                    |
-| `--include <patterns...>` | Include skills by package or `package#skill` pattern          |
-| `--exclude <patterns...>` | Exclude skills by package or `package#skill` pattern          |
-| `-r, --recursive`         | Also read dependencies of workspace packages                  |
-| `--frozen-lockfile`       | Fail instead of changing `skills-lock.json` (default in CI)   |
-| `--no-frozen-lockfile`    | Allow `skills-lock.json` to change in CI                      |
+| Option                    | Description                                                 |
+| ------------------------- | ----------------------------------------------------------- |
+| `-a, --agent <agents...>` | Select agent directories                                    |
+| `-y, --yes`               | Skip confirmation prompts                                   |
+| `--dry-run`               | Show the plan without installing or removing skills         |
+| `--copy`                  | Copy packaged skills instead of linking them                |
+| `--no-cleanup`            | Keep skills that are no longer provided                     |
+| `--no-remote`             | Skip installing and removing remote skills                  |
+| `--include <patterns...>` | Include skills by package or `package#skill` pattern        |
+| `--exclude <patterns...>` | Exclude skills by package or `package#skill` pattern        |
+| `-r, --recursive`         | Also read dependencies of workspace packages                |
+| `--frozen-lockfile`       | Fail instead of changing `skills-lock.json` (default in CI) |
+| `--no-frozen-lockfile`    | Allow `skills-lock.json` to change in CI                    |
 
 The include/exclude filters apply to both packaged and remote skills. For remote
 skills, the package pattern matches the package declaring the entry (`.` for the
@@ -389,7 +389,7 @@ pass `--no-frozen-lockfile` to update the lock from CI.
 ### Restore skills from the project lock file
 
 ```bash
-npx skills experimental_install
+npx @krysto/skills experimental_install
 ```
 
 `skills install` and `skills i` without a source are aliases for this command. With
@@ -409,13 +409,13 @@ the agents last selected with `skills add`; otherwise to the agents detected on 
 machine. With none of these, only `.agents/skills/` is filled. Skills recorded with
 `installMode: "copy"` are copied into each agent directory instead of linked.
 
-| Option                 | Description                                                 |
-| ---------------------- | ----------------------------------------------------------- |
-| `-a, --agent <agents...>` | Link to these agents (use `'*'` for all)                 |
-| `--dry-run`            | Show what would be restored without installing anything     |
-| `--frozen-lockfile`    | Fail instead of changing `skills-lock.json` (default in CI) |
-| `--no-frozen-lockfile` | Allow `skills-lock.json` to change in CI                    |
-| `--force`              | Reinstall skills that are already in `.agents/skills/`      |
+| Option                    | Description                                                 |
+| ------------------------- | ----------------------------------------------------------- |
+| `-a, --agent <agents...>` | Link to these agents (use `'*'` for all)                    |
+| `--dry-run`               | Show what would be restored without installing anything     |
+| `--frozen-lockfile`       | Fail instead of changing `skills-lock.json` (default in CI) |
+| `--no-frozen-lockfile`    | Allow `skills-lock.json` to change in CI                    |
+| `--force`                 | Reinstall skills that are already in `.agents/skills/`      |
 
 With `--frozen-lockfile`, every restored skill must match the content hash recorded
 in `skills-lock.json`, and so must every skill that is skipped because it is already

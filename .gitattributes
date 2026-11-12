@@ -1,0 +1,2 @@
+# Keep the published executable runnable on Unix after Windows checkouts.
+bin/cli.mjs text eol=lf

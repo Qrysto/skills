@@ -5,11 +5,11 @@ scaffolders) can install and manage skills without spawning the CLI or
 sharing the terminal with it.
 
 ```bash
-npm install skills
+npm install @krysto/skills
 ```
 
 ```ts
-import { detectAgents, installSkills, resolveSource } from 'skills';
+import { detectAgents, installSkills, resolveSource } from '@krysto/skills';
 
 const { agents } = await detectAgents({ cwd });
 
@@ -121,7 +121,7 @@ Options passed to a call take precedence over `config`, which takes
 precedence over the defaults.
 
 ```ts
-import type { SkillsConfig } from 'skills';
+import type { SkillsConfig } from '@krysto/skills';
 
 const config: SkillsConfig = {
   scope: 'project', // 'project' | 'global'
@@ -131,7 +131,7 @@ const config: SkillsConfig = {
   includeInternal: false,
   duplicates: 'first', // 'first' | 'error'
   symlinks: 'follow', // 'follow' | 'reject'
-  telemetry: true,
+  telemetry: false,
   agents: {
     include: ['claude-code', 'cursor'], // only these may be targeted
     exclude: [], // never targeted
@@ -156,10 +156,10 @@ never read such files implicitly; callers will load and pass them.
 
 ## Telemetry
 
-Install and remove calls send the same anonymous telemetry as the CLI (only
-for public repositories). Turn it off per call or in config with
-`telemetry: false`; `DISABLE_TELEMETRY=1` and `DO_NOT_TRACK=1` always turn it
-off. See [what is collected](troubleshooting.md#telemetry).
+Usage telemetry is always disabled in this fork. The `telemetry` and install
+`metadata` options remain accepted for compatibility, but do not enable reporting.
+See [network behavior](troubleshooting.md#telemetry) for upstream discovery and
+security-audit requests.
 
 ## Errors
 
@@ -169,7 +169,7 @@ Each has a permanent `code` (`SKILLS_*`), a `message`, and often a `fix`.
 Check them with `isDiagnostic`:
 
 ```ts
-import { installSkills, isDiagnostic } from 'skills';
+import { installSkills, isDiagnostic } from '@krysto/skills';
 
 try {
   await installSkills(source, options);

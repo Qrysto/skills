@@ -325,7 +325,7 @@ export function printSkippedSkills(skipped: SkippedSkill[]): void {
       const names = skills.map((s) => sanitizeMetadata(s.name)).join(', ');
       console.log(`  ${TEXT}•${RESET} ${names} ${DIM}(${reason})${RESET}`);
     }
-    console.log(`    ${DIM}To update: ${TEXT}npx skills add ${source} -g -y${RESET}`);
+    console.log(`    ${DIM}To update: ${TEXT}npx @krysto/skills add ${source} -g -y${RESET}`);
   }
 }
 
@@ -504,7 +504,7 @@ function printNewSkills(baseUrl: string, newSkills: string[], isGlobal: boolean)
     `  ${DIM}${newSkills.length} new skill(s) available from this source:${RESET} ${names.join(', ')}`
   );
   console.log(
-    `    ${DIM}To install: ${TEXT}npx skills add ${baseUrl} --skill ${names.join(' ')}${isGlobal ? ' -g' : ''}${RESET}`
+    `    ${DIM}To install: ${TEXT}npx @krysto/skills add ${baseUrl} --skill ${names.join(' ')}${isGlobal ? ' -g' : ''}${RESET}`
   );
 }
 
@@ -724,7 +724,9 @@ export async function updateGlobalSkills(
   if (skillNames.length === 0) {
     if (!options.skills) {
       console.log(`${DIM}No global skills tracked in lock file.${RESET}`);
-      console.log(`${DIM}Install skills with${RESET} ${TEXT}npx skills add <package> -g${RESET}`);
+      console.log(
+        `${DIM}Install skills with${RESET} ${TEXT}npx @krysto/skills add <package> -g${RESET}`
+      );
     }
     return { successCount, failCount, checkedCount: 0 };
   }
@@ -1035,7 +1037,7 @@ export async function updateProjectSkills(
     if (!options.skills) {
       console.log(`${DIM}No project skills to update.${RESET}`);
       console.log(
-        `${DIM}Install project skills with${RESET} ${TEXT}npx skills add <package>${RESET}`
+        `${DIM}Install project skills with${RESET} ${TEXT}npx @krysto/skills add <package>${RESET}`
       );
     }
     return { successCount, failCount, foundCount: 0 };
@@ -1316,7 +1318,7 @@ export function printLegacyProjectSkills(
     const reinstall = buildLocalUpdateSource(skill.entry);
     console.log(`  ${TEXT}•${RESET} ${sanitizeMetadata(skill.name)}`);
     if (reinstall) {
-      console.log(`    ${DIM}To refresh: ${TEXT}npx skills add ${reinstall} -y${RESET}`);
+      console.log(`    ${DIM}To refresh: ${TEXT}npx @krysto/skills add ${reinstall} -y${RESET}`);
     } else {
       console.log(
         `    ${DIM}To refresh: reinstall using the original full Git URL; this lock entry only has an ambiguous shorthand.${RESET}`
@@ -1391,13 +1393,13 @@ export async function runUpdate(
   }
   if (outdatedCount > 0) {
     console.log(
-      `${TEXT}${outdatedCount} skill(s) can be updated; run ${BOLD}npx skills update${RESET}${TEXT} to install${RESET}`
+      `${TEXT}${outdatedCount} skill(s) can be updated; run ${BOLD}npx @krysto/skills update${RESET}${TEXT} to install${RESET}`
     );
     process.exitCode = 1;
   }
   if (modifiedCount > 0) {
     console.log(
-      `${TEXT}${modifiedCount} skill(s) differ from skills-lock.json; run ${BOLD}npx skills install --force${RESET}${TEXT} to restore them${RESET}`
+      `${TEXT}${modifiedCount} skill(s) differ from skills-lock.json; run ${BOLD}npx @krysto/skills install --force${RESET}${TEXT} to restore them${RESET}`
     );
     process.exitCode = 1;
   }
